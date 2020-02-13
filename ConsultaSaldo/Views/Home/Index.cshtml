@@ -1,0 +1,95 @@
+﻿
+<row class="row">
+
+    <label>Documento </label>
+    <div class="input-group">
+        <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroup-sizing-default">
+                <i class="fas fa-id-card"></i>
+            </span>
+        </div>
+        <input type="text" class="col-2" aria-label="Sizing example input" id="document">
+    </div>
+
+    <label>Codigo da Loja </label>
+    <div class="input-group">
+        <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroup-sizing-default">
+                <i class="fas fa-store"></i>
+            </span>
+        </div>
+        <input type="text" class="col-2" aria-label="Sizing example input" id="StoreCode">
+    </div>
+
+    <label>Saldo em Reais </label>
+    <div class="input-group">
+        <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroup-sizing-default">
+                <i class="far fa-money-bill-alt"></i>
+            </span>
+        </div>
+        <input type="text" class="col-2" aria-label="Sizing example input" id="Money" disabled="disabled">
+    </div>
+
+    <label>Saldo em Pontos </label>
+    <div class="input-group">
+        <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroup-sizing-default">
+                <i class="fas fa-coins"></i>
+            </span>
+        </div>
+        <input type="text" class="col-2" aria-label="Sizing example input" id="Points" disabled="disabled">
+    </div>
+</row>
+
+<br />
+<row class="row">
+    <div class="input-group">
+        <button type="button" class="btn btn-primary" data-toggle="button" id="btnConsulta" >
+            Consultar Saldo
+        </button>
+    </div>
+</row>
+
+
+<style>
+
+    #btnConsulta {
+        background-color: orange;
+        border-color: black;
+    }
+</style>
+
+
+<script type="text/javascript">
+
+    $(document).ready(function ($) {
+        {
+            $("#document").mask("999.999.999-99");
+            $("#StoreCode").mask("00000000")
+
+        }
+    });
+
+
+
+    //Chamar a API da Único
+
+    $("#btnConsulta").click(function () {
+
+        var cleardocument = $("#document").val().replace(".", "").replace(".", "").replace("-", "");
+          $.ajax({
+              method: "POST",
+              url: '@Url.Action("ConsultaCliente", "Home")',
+              data: { document: cleardocument },
+              datatype: "json",
+              success: function (ViewModel)
+              {
+                  $("#Money").val(ViewModel.saldoEmReais);
+                  $("#Points").val(ViewModel.saldoEmPontos);
+              }
+
+           });
+    });
+
+</script>
