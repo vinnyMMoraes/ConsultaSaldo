@@ -1,88 +1,64 @@
-﻿using ConsultaSaldo.Models;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
+﻿using ConsultaSaldo.Models.Reshop;
 using System.Threading.Tasks;
-using System.Web;
+using ConsultaSaldo.Models;
 using System.Web.Mvc;
+using System;
+using ConsultaSaldo.Service;
 
 namespace ConsultaSaldo.Controllers
 {
     public class HomeController : Controller
     {
+        private HttpServiceReshop ServiceReshop;
+        public HomeController()
+        {
+            //Implementar IOC
+            ServiceReshop = new HttpServiceReshop();
+        }
 
         public ActionResult Index()
         {
             return View();
         }
 
-        public ActionResult About()
-        {
-            ViewBag.Message = "Your application description page.";
-
-            return View();
-        }
-
-        public ActionResult Contact()
-        {
-            ViewBag.Message = "Your contact page.";
-            return View();
-        }
-
-
         public async Task<ActionResult> Consultacliente(string document)
         {
+            var result = new ResponseViewModel();
+
+            ConsultaSaldoRequest Customer = new ConsultaSaldoRequest(document);
+
+            if (!Customer.IsValid)
+            {
+                result.AddFalha(Customer.MensagemErro);
+                return Json(result, JsonRequestBehavior.AllowGet);
+            }
+
             try
             {
-                if (String.IsNullOrEmpty(document) || (document.Length != 11))
-                    throw new ArgumentNullException(document, "Por favor Informe um Documento Válido");
+                var resultConsulta = await ServiceReshop.ConsultaFidelizacao(Customer);
+
+                //Implementar o Automapper
+                if (string.IsNullOrEmpty(resultConsulta.MensagemErro))
+                {
+                    result = new ResponseViewModel
+                    {
+                        NsuCliente = resultConsulta.NsuCliente,
+                        SaldoEmPontos = resultConsulta.SaldoEmPontos,
+                        SaldoPontos = resultConsulta.SaldoPontos,
+                        SaldoEmReais = resultConsulta.SaldoEmReais
+                    };
+                }
                 else
                 {
-                    string date = DateTime.Now.ToString("MMddyyyyHHmmss");
-                    string nsucliente = document + date;
-
-                    RequestConsultaSaldo Customer = new RequestConsultaSaldo();
-
-                    Customer.chaveIntegracao = "4B335B6F-9C4D-47F7-B798-C46FFBC4881A";
-                    Customer.codigoLoja = "1";
-                    Customer.nsuCliente = nsucliente;
-                    Customer.numeroCartao = document;
-                    HttpClient client = new HttpClient();
-
-                    var Url = "https://hfllinxintegracaogiftwebapi-hom.azurewebsites.net/LinxServiceApi/FidelidadeService/ConsultaFidelizacao";
-
-                    HttpResponseMessage send = await client.PostAsJsonAsync(Url, Customer);
-
-                    send.EnsureSuccessStatusCode();
-                    string responseBody = await send.Content.ReadAsStringAsync();
-
-                    ResponseConsultaSaldo response = JsonConvert.DeserializeObject<ResponseConsultaSaldo>(responseBody);
-
-                    if (String.IsNullOrEmpty(response.saldoEmPontos))
-                        throw new ArgumentNullException(response.saldoEmPontos, "o cliente está com a pontuação zerada");
-
-                    ResponseViewModel ResponseViewModel = new ResponseViewModel();
-                    ResponseViewModel.mensagemErro = response.mensagemErro;
-                    ResponseViewModel.nsuCliente = response.nsuCliente;
-                    ResponseViewModel.saldoEmPontos = response.saldoEmPontos;
-                    ResponseViewModel.saldoPontos = response.saldoPontos;
-                    ResponseViewModel.saldoEmReais = response.saldoEmReais;
-
-                    return Json(ResponseViewModel, JsonRequestBehavior.AllowGet);
+                    result.AddFalha(resultConsulta.MensagemErro);
                 }
-            
             }
             catch (Exception ex)
             {
-                return Json(0, JsonRequestBehavior.AllowGet);
-
-                throw;
+                result.AddError(ex);
             }
 
-            return Json(0, JsonRequestBehavior.AllowGet);
-}
+            return Json(result, JsonRequestBehavior.AllowGet);
+        }
     }
 }

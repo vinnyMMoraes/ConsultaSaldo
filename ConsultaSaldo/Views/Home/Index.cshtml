@@ -45,7 +45,7 @@
 <br />
 <row class="row">
     <div class="input-group">
-        <button type="button" class="btn btn-primary" data-toggle="button" id="btnConsulta" >
+        <button type="button" class="btn btn-primary" data-toggle="button" id="btnConsulta">
             Consultar Saldo
         </button>
     </div>
@@ -71,10 +71,7 @@
         }
     });
 
-
-
     //Chamar a API da Único
-
     $("#btnConsulta").click(function () {
 
         var cleardocument = $("#document").val().replace(".", "").replace(".", "").replace("-", "");
@@ -85,11 +82,13 @@
               datatype: "json",
               success: function (ViewModel)
               {
-                  $("#Money").val(ViewModel.saldoEmReais);
-                  $("#Points").val(ViewModel.saldoEmPontos);
+                  if (ViewModel.IsValid) {                        
+                      $("#Money").val(ViewModel.SaldoEmReais);
+                      $("#Points").val(ViewModel.SaldoEmPontos);
+                  } else {
+                     //Adicionar msg de erro.
+                  }
               }
-
            });
     });
-
 </script>
